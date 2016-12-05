@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Horror movies</title>
+    <script type="text/javascript" src="d3/d3.js"></script>
+
+</head>
+<body>
+    <script type="text/javascript">
+        var diameter = 70, //max size of the bubbles
+            w = 900,
+            h = 800;
+        var svg = d3.select("body")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h)
+        d3.csv("data.csv", function(error, data){
+
+            data = data.map(function(d){
+                d.year = +d["year"];
+                d.year_bucket = +d["year_bucket"];
+                return d;
+                });
+            var tagCount = d3.nest()
+                              .key(function(d) { return d.name; })
+                              .rollup(function(v) { return v.length; })
+                              .entries(data);
+            var tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > 10;
+                                             });
+            var radiusScale = d3.scaleSqrt()
+                            .domain([10, d3.max(tagsToDraw, function(d){
+                                return d.value})])
+                            .range([0,diameter])
+            var colorScale    = d3.scaleOrdinal(d3.schemeCategory20b); //color category
+
+            var simulation = d3.forceSimulation()
+
+                                .force("x", d3.forceX(w/2).strength(0.03))
+                                .force("y", d3.forceY(h/2).strength(0.03))
+
+                                .force("collide", d3.forceCollide(function(d){
+                                   return radiusScale(d.value)+1;
+                                }).strength(0.6))
+
+            var circles = svg.selectAll("circle")
+                .data(tagsToDraw)
+                .enter().append("circle")
+                .attr("r", function(d) {
+                    return radiusScale(d.value);
+                })
+                .attr("fill",function(d) {
+                    return colorScale(d.value);
+                })
+
+            simulation.nodes(tagsToDraw)
+                .on("tick", ticked)
+
+            function ticked() {
+                circles
+                    .attr("cx", function(d){ return d.x})
+                    .attr("cy", function(d){ return d.y})
+            }
+
+            //debugger;
+         });
+
+    </script>
+
+
+</body>
+</html>
