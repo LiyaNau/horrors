@@ -7,10 +7,19 @@
 
 </head>
 <body>
+    <div>
+        <button id="select">select</button>
+        <button id="previous">previous</button>
+        <span>1890</span>
+        <button id="next">next</button>
+        <button id="all">all</button>
+    </div>
+
     <script type="text/javascript">
         var diameter = 70, //max size of the bubbles
             w = 900,
             h = 800;
+        var decade = 1890;
         var svg = d3.select("body")
                 .append("svg")
                 .attr("width", w)
@@ -65,7 +74,12 @@
                     .attr("cy", function(d){ return d.y})
             }
 
-            //debugger;
+            d3.select("#select")
+                .on("click", selectDecade)
+
+            function selectDecade() {
+                console.log("select");
+            }           //debugger;
          });
 
     </script>
