@@ -36,10 +36,10 @@
                               .rollup(function(v) { return v.length; })
                               .entries(data);
             var tagsToDraw = tagCount.filter(function(d) {
-                                                return d.value > 10;
+                                                return d.value > 5;
                                              });
             var radiusScale = d3.scaleSqrt()
-                            .domain([10, d3.max(tagsToDraw, function(d){
+                            .domain([0, d3.max(tagsToDraw, function(d){
                                 return d.value})])
                             .range([0,diameter])
             var colorScale    = d3.scaleSequential()
@@ -55,8 +55,9 @@
                                    return radiusScale(d.value)+1;
                                 }).strength(0.6))
 
-            var circles = svg.selectAll("circle")
-                .data(tagsToDraw)
+            var circles = svg.append("g")
+                .selectAll("circle")
+                .data(tagsToDraw, function(d) {return d.key})
                 .enter().append("circle")
                 .attr("r", function(d) {
                     return radiusScale(d.value);
@@ -76,10 +77,63 @@
 
             d3.select("#select")
                 .on("click", selectDecade)
+            d3.select("#next")
+                .on("click", increaseDecade)
+
 
             function selectDecade() {
                 console.log("select");
-            }           //debugger;
+                tagCount = d3.nest()
+                              .key(function(d) { return d.name; })
+                              .rollup(function(v) { return v.length; })
+                              .entries(data.filter(function(d) {
+                                                return d.year_bucket === decade;
+                                             }));
+                tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > 0;
+                                             });
+                //radiusScale.domain([0,d3.max(tagsToDraw,function(d){return d.value})])
+                //colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
+
+                simulation.nodes(tagsToDraw).on("tick",ticked)
+
+                circles = d3.selectAll("circle")
+                .data(tagsToDraw, function(d) {return d.key})
+
+
+
+                g = circles.enter()
+                    .append("g")
+
+                g.append("circle")
+                .attr("r", function(d) {
+                    return radiusScale(d.value);
+                })
+                .attr("fill",function(d) {
+                    return colorScale(d.value);
+                })
+
+                circles.exit()
+                .transition()
+                .attr("r",0)
+                .remove();
+
+                circles.attr("r", function(d) {
+                 return radiusScale(d.value);
+                })
+                .attr("fill",function(d) {
+                    return colorScale(d.value);
+                })
+
+
+
+                simulation.alpha(1).restart();
+                debugger;
+            };
+
+            function increaseDecade() {
+                decade = decade + 10;
+            }
          });
 
     </script>
