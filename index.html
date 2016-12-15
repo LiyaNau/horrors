@@ -10,7 +10,7 @@
     <div>
         <button id="select">select</button>
         <button id="previous">previous</button>
-        <span>1890</span>
+        <span id="decade">1890</span>
         <button id="next">next</button>
         <button id="all">all</button>
     </div>
@@ -19,12 +19,14 @@
         var diameter = 70, //max size of the bubbles
             w = 900,
             h = 800;
-            n_min = 10;
+            n_min = 10; //minimal number of mentions for tag
+
         var decade = 1890;
         var svg = d3.select("body")
                 .append("svg")
                 .attr("width", w)
                 .attr("height", h)
+
         d3.csv("data.csv", function(error, data){
 
             data = data.map(function(d){
@@ -32,10 +34,13 @@
                 d.year_bucket = +d["year_bucket"];
                 return d;
                 });
+
+            // count tne number of mentions for all tags
             var tagCount = d3.nest()
                               .key(function(d) { return d.name; })
                               .rollup(function(v) { return v.length; })
                               .entries(data);
+            // select tags that were mentioned more than n_min times
             var tagsToDraw = tagCount.filter(function(d) {
                                                 return d.value > n_min;
                                              });
@@ -46,13 +51,11 @@
 
             var colorScale    = d3.scaleSequential()
                                 .domain([0,d3.max(tagsToDraw, function(d){return d.value})])
-                                .interpolator(d3.interpolateCool); //color category
+                                .interpolator(d3.interpolateCool);
 
             var simulation = d3.forceSimulation()
-
                                 .force("x", d3.forceX().strength(0.03))
                                 .force("y", d3.forceY().strength(0.03))
-
                                 .force("collide", d3.forceCollide(function(d){
                                    return radiusScale(d.value)+1;
                                 }).strength(0.6))
@@ -62,19 +65,21 @@
             }
 
             var tag = function(d) {
+                // label to display for bigger bubbles
                 if (radiusScale(d.value) > 10) {
                     return d.key;
                 }
             }
 
             var tagUrl = function(d) {
-
+                // creates clipPath url from tag name
                 return d.key.split(" ").join("-");
             }
 
             var g = svg.append("g")
                 .attr("transform", "translate(" + w / 2 + "," + h / 2 + ")")
 
+            // creating bubbles
             var circles = g.append("g")
                 .attr("id","bubbles")
                 .selectAll("circle")
@@ -89,26 +94,27 @@
                     return colorScale(d.value);
                 })
 
-
-            var labels = g.append("g")
-                    .attr("id", "tags")
-                    .selectAll("text")
-                    .data(tagsToDraw, key)
-                    .enter()
+            // creating paths
             var paths = g.append("g")
                     .attr("id", "clips")
                     .selectAll("clipPath")
                     .data(tagsToDraw, key)
                     .enter()
+                    .append("clipPath")
+                        .attr("id", function(d) { return "clip-" + tagUrl(d) })
 
-            paths.append("clipPath")
-                .attr("id", function(d) { return "clip-" + tagUrl(d) })
-                .append("circle")
-                .attr("class","path")
-                .attr("r", function(d) {return radiusScale(d.value) })
+                paths.append("circle")
+                    .attr("class","path")
+                    .attr("r", function(d) {return radiusScale(d.value) })
 
+            // creating labels
+            var labels = g.append("g")
+                    .attr("id", "tags")
+                    .selectAll("text")
+                    .data(tagsToDraw, key)
+                    .enter()
 
-            labels.append("text")
+                    .append("text")
                     .attr("class","tag")
                     .attr("clip-path", function(d) {
                         return "url(#clip-" + tagUrl(d) + ")";
@@ -119,14 +125,22 @@
                     .attr("fill", "white")
                     .attr("text-anchor", "middle");
 
+            pathCircles = d3.select("#clips")
+                    .selectAll(".path");
+
             simulation.nodes(tagsToDraw)
                 .on("tick", ticked)
 
-            circles = d3.select("#bubbles")
-                    .selectAll("circle");
-            pathCircles = d3.select("#clips")
-                    .selectAll(".path");
-            labels = d3.selectAll(".tag");
+            // buttons action
+            d3.select("#select")
+                .on("click", selectDecade)
+            d3.select("#next")
+                .on("click", increaseDecade)
+            d3.select("#previous")
+                .on("click", decreaseDecade)
+
+
+
 
             function ticked() {
 
@@ -144,14 +158,11 @@
                     .attr("y", function(d){ return d.y})
             }
 
-            d3.select("#select")
-                .on("click", selectDecade)
-            d3.select("#next")
-                .on("click", increaseDecade)
 
 
             function selectDecade() {
-                console.log("select");
+                // filter data for chosen decade
+
                 n_min = 2;
                 tagCount = d3.nest()
                               .key(function(d) { return d.name; })
@@ -162,25 +173,24 @@
                 tagsToDraw = tagCount.filter(function(d) {
                                                 return d.value > n_min;
                                              });
+                // update scales
                 radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
                 colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
 
-                //simulation.nodes(tagsToDraw).on("tick",ticked)
+                updateChart(tagsToDraw);
+            };
+
+            function updateChart(tagsToDraw) {
 
                 circles = circles
-                .data(tagsToDraw, key);
-
-                labels = d3.select("#tags")
-                    .selectAll(".tag")
                     .data(tagsToDraw, key);
-                paths = d3.select("#clips")
-                    .selectAll("clipPath")
+                labels = labels
+                    .data(tagsToDraw, key);
+                paths = paths
                     .data(tagsToDraw,key)
 
-                //debugger;
-
                 circles.exit()
-                    .transition(5000)
+                    .transition(2000)
                     .attr("r",0)
                     .remove();
 
@@ -196,7 +206,7 @@
                     .attr("class", "bubble")
                     .merge(circles)
                     .call(function(node) {
-                        node.transition(5000)
+                        node.transition(2000)
                         .attr("r", function(d) {
                             return radiusScale(d.value);
                         })
@@ -205,14 +215,14 @@
                         })
                     })
 
-                debugger;
 
-                paths.enter()
+                paths = paths.enter()
                     .append("clipPath")
                     .attr("id", function(d) { return "clip-" + tagUrl(d) })
                     .append("circle")
                     .attr("class","path")
-                    .attr("r", function(d) {return radiusScale(d.value) });
+                    .attr("r", function(d) {return radiusScale(d.value) })
+                    .merge(paths);
 
 
                 paths.select("circle")
@@ -241,6 +251,14 @@
 
             function increaseDecade() {
                 decade = decade + 10;
+                d3.select("#decade")
+                    .text(decade)
+            }
+
+            function decreaseDecade() {
+                decade = decade -10;
+                d3.select("#decade")
+                    .text(decade)
             }
          });
 
