@@ -19,6 +19,7 @@
         var diameter = 70, //max size of the bubbles
             w = 900,
             h = 800;
+            n_min = 10;
         var decade = 1890;
         var svg = d3.select("body")
                 .append("svg")
@@ -36,30 +37,51 @@
                               .rollup(function(v) { return v.length; })
                               .entries(data);
             var tagsToDraw = tagCount.filter(function(d) {
-                                                return d.value > 5;
+                                                return d.value > n_min;
                                              });
             var radiusScale = d3.scaleSqrt()
-                            .domain([0, d3.max(tagsToDraw, function(d){
+                            .domain([n_min, d3.max(tagsToDraw, function(d){
                                 return d.value})])
                             .range([0,diameter])
+
             var colorScale    = d3.scaleSequential()
                                 .domain([0,d3.max(tagsToDraw, function(d){return d.value})])
                                 .interpolator(d3.interpolateCool); //color category
 
             var simulation = d3.forceSimulation()
 
-                                .force("x", d3.forceX(w/2).strength(0.03))
-                                .force("y", d3.forceY(h/2).strength(0.03))
+                                .force("x", d3.forceX().strength(0.03))
+                                .force("y", d3.forceY().strength(0.03))
 
                                 .force("collide", d3.forceCollide(function(d){
                                    return radiusScale(d.value)+1;
                                 }).strength(0.6))
 
+            var key = function(d) {
+                return d.key;
+            }
+
+            var tag = function(d) {
+                if (radiusScale(d.value) > 10) {
+                    return d.key;
+                }
+            }
+
+            var tagUrl = function(d) {
+
+                return d.key.split(" ").join("-");
+            }
+
             var g = svg.append("g")
+                .attr("transform", "translate(" + w / 2 + "," + h / 2 + ")")
+
             var circles = g.append("g")
+                .attr("id","bubbles")
                 .selectAll("circle")
-                .data(tagsToDraw, function(d) {return d.key})
-                .enter().append("circle")
+                .data(tagsToDraw, key)
+                .enter()
+                .append("circle")
+                .attr("class","bubble")
                 .attr("r", function(d) {
                     return radiusScale(d.value);
                 })
@@ -67,13 +89,59 @@
                     return colorScale(d.value);
                 })
 
+
+            var labels = g.append("g")
+                    .attr("id", "tags")
+                    .selectAll("text")
+                    .data(tagsToDraw, key)
+                    .enter()
+            var paths = g.append("g")
+                    .attr("id", "clips")
+                    .selectAll("clipPath")
+                    .data(tagsToDraw, key)
+                    .enter()
+
+            paths.append("clipPath")
+                .attr("id", function(d) { return "clip-" + tagUrl(d) })
+                .append("circle")
+                .attr("class","path")
+                .attr("r", function(d) {return radiusScale(d.value) })
+
+
+            labels.append("text")
+                    .attr("class","tag")
+                    .attr("clip-path", function(d) {
+                        return "url(#clip-" + tagUrl(d) + ")";
+                    })
+                    .text(tag)
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("fill", "white")
+                    .attr("text-anchor", "middle");
+
             simulation.nodes(tagsToDraw)
                 .on("tick", ticked)
 
+            circles = d3.select("#bubbles")
+                    .selectAll("circle");
+            pathCircles = d3.select("#clips")
+                    .selectAll(".path");
+            labels = d3.selectAll(".tag");
+
             function ticked() {
+
                 circles
                     .attr("cx", function(d){ return d.x})
                     .attr("cy", function(d){ return d.y})
+
+
+                pathCircles
+                    .attr("cx", function(d){ return d.x})
+                    .attr("cy", function(d){ return d.y})
+
+                labels
+                    .attr("x", function(d){ return d.x})
+                    .attr("y", function(d){ return d.y})
             }
 
             d3.select("#select")
@@ -84,6 +152,7 @@
 
             function selectDecade() {
                 console.log("select");
+                n_min = 2;
                 tagCount = d3.nest()
                               .key(function(d) { return d.name; })
                               .rollup(function(v) { return v.length; })
@@ -91,25 +160,43 @@
                                                 return d.year_bucket === decade;
                                              }));
                 tagsToDraw = tagCount.filter(function(d) {
-                                                return d.value > 0;
+                                                return d.value > n_min;
                                              });
-                radiusScale.domain([0,d3.max(tagsToDraw,function(d){return d.value})])
+                radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
                 colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
 
                 //simulation.nodes(tagsToDraw).on("tick",ticked)
 
                 circles = circles
-                .data(tagsToDraw, function(d) {return d.key})
+                .data(tagsToDraw, key);
+
+                labels = d3.select("#tags")
+                    .selectAll(".tag")
+                    .data(tagsToDraw, key);
+                paths = d3.select("#clips")
+                    .selectAll("clipPath")
+                    .data(tagsToDraw,key)
+
+                //debugger;
 
                 circles.exit()
-                .transition()
-                .attr("r",0)
-                .remove();
+                    .transition(5000)
+                    .attr("r",0)
+                    .remove();
+
+                labels.exit()
+                    .remove();
+
+                paths.exit()
+                    .remove();
+
 
                 circles = circles.enter()
                     .append("circle")
+                    .attr("class", "bubble")
+                    .merge(circles)
                     .call(function(node) {
-                        node.transition()
+                        node.transition(5000)
                         .attr("r", function(d) {
                             return radiusScale(d.value);
                         })
@@ -117,22 +204,39 @@
                             return colorScale(d.value);
                         })
                     })
-                    .merge(circles)
-                // .
+
+                debugger;
+
+                paths.enter()
+                    .append("clipPath")
+                    .attr("id", function(d) { return "clip-" + tagUrl(d) })
+                    .append("circle")
+                    .attr("class","path")
+                    .attr("r", function(d) {return radiusScale(d.value) });
 
 
+                paths.select("circle")
+                    .attr("r", function(d) {return radiusScale(d.value) })
 
-                circles.attr("r", function(d) {
-                 return radiusScale(d.value);
-                })
-                .attr("fill",function(d) {
-                    return colorScale(d.value);
-                })
+                labels = labels.enter()
+                    .append("text")
+                    .attr("class","tag")
+                    .merge(labels)
+                    .attr("clip-path", function(d) {
+                        return "url(#clip-" + tagUrl(d) + ")";
+                    })
+                    .text(tag)
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("fill", "white")
+                    .attr("text-anchor", "middle");
 
 
                 simulation.nodes(tagsToDraw)
                 simulation.alpha(1).restart();
-                debugger;
+                pathCircles = d3.select("#clips")
+                    .selectAll(".path");
+                //debugger;
             };
 
             function increaseDecade() {
