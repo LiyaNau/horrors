@@ -20,7 +20,7 @@
             box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
             }
         #tooltip.hidden {
-            display: yes;
+            display: none;
             }
         #tooltip p {
             margin: 0;
@@ -28,6 +28,9 @@
             font-size: 14px;
             line-height: 20px;
             }
+        .tag {
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -168,6 +171,12 @@
             d3.select("#all")
                 .on("click", unselect)
 
+            // tooltips
+            d3.selectAll(".bubble")
+                .on("mouseover",showTooltip)
+                .on("mouseout", function() {
+                    d3.select("#tooltip").classed("hidden", true);
+                })
 
 
 
@@ -274,6 +283,13 @@
                     .attr("fill", "white")
                     .attr("text-anchor", "middle");
 
+                // tooltips
+                d3.selectAll(".bubble")
+                .on("mouseover",showTooltip)
+                .on("mouseout", function() {
+                    d3.select("#tooltip").classed("hidden", true);
+                })
+
                 // restarting simulation
                 simulation.nodes(tagsToDraw)
                 simulation.alpha(1).restart();
@@ -311,6 +327,29 @@
                 radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
                 colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
                 updateChart(tagsToDraw);
+            }
+
+            function showTooltip(d) {
+
+                var x = parseFloat(d3.select(this).attr("cx")) + w / 2 ;
+                var y = parseFloat(d3.select(this).attr("cy")) + h / 2;
+
+
+                var tooltip = d3.select("#tooltip");
+
+                tooltip.style("left", x + "px")
+                    .style("top", y + "px")
+                    //.attr("transform", "translate(" + w / 2 + "," + h / 2 + ")")
+
+                tooltip.select("#key")
+                    .text(d.key)
+                tooltip.select("#value")
+                    .text(d.value)
+
+                tooltip.classed("hidden",false);
+
+                console.log(x,y);
+
             }
          });
 
