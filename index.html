@@ -4,7 +4,31 @@
     <meta charset="UTF-8">
     <title>Horror movies</title>
     <script type="text/javascript" src="d3/d3.js"></script>
-
+    <style type="text/css">
+        #tooltip {
+            position: absolute;
+            width: auto;
+            height: auto;
+            padding: 6px;
+            background-color: white;
+            -webkit-border-radius: 10px;
+            -moz-border-radius: 10px;
+            border-radius: 10px;
+            pointer-events: none;
+            -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            }
+        #tooltip.hidden {
+            display: yes;
+            }
+        #tooltip p {
+            margin: 0;
+            font-family: sans-serif;
+            font-size: 14px;
+            line-height: 20px;
+            }
+    </style>
 </head>
 <body>
     <div>
@@ -14,7 +38,10 @@
         <button id="next">next</button>
         <button id="all">all</button>
     </div>
-
+    <div id="tooltip" class="hidden">
+        <p><span id="key">key</span></p>
+        <p><span id="value">0</span></p>
+    </div>
     <script type="text/javascript">
         var diameter = 70, //max size of the bubbles
             w = 900,
@@ -138,6 +165,8 @@
                 .on("click", increaseDecade)
             d3.select("#previous")
                 .on("click", decreaseDecade)
+            d3.select("#all")
+                .on("click", unselect)
 
 
 
@@ -182,13 +211,17 @@
 
             function updateChart(tagsToDraw) {
 
+                // binding  with new data
                 circles = circles
                     .data(tagsToDraw, key);
                 labels = labels
                     .data(tagsToDraw, key);
-                paths = paths
-                    .data(tagsToDraw,key)
+                paths = d3.select("#clips")
+                    .selectAll("clipPath")
+                    .data(tagsToDraw, key)
+                debugger;
 
+                // removing unnesessary bubbles
                 circles.exit()
                     .transition(2000)
                     .attr("r",0)
@@ -200,7 +233,7 @@
                 paths.exit()
                     .remove();
 
-
+                // adding and updatind bubbles
                 circles = circles.enter()
                     .append("circle")
                     .attr("class", "bubble")
@@ -215,7 +248,7 @@
                         })
                     })
 
-
+                debugger;
                 paths = paths.enter()
                     .append("clipPath")
                     .attr("id", function(d) { return "clip-" + tagUrl(d) })
@@ -241,7 +274,7 @@
                     .attr("fill", "white")
                     .attr("text-anchor", "middle");
 
-
+                // restarting simulation
                 simulation.nodes(tagsToDraw)
                 simulation.alpha(1).restart();
                 pathCircles = d3.select("#clips")
@@ -259,6 +292,25 @@
                 decade = decade -10;
                 d3.select("#decade")
                     .text(decade)
+            }
+
+            function unselect() {
+
+                n_min = 10;
+
+                tagCount = d3.nest()
+                    .key(function(d) { return d.name; })
+                    .rollup(function(v) { return v.length; })
+                    .entries(data);
+
+                // select tags that were mentioned more than n_min times
+                tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > n_min;
+                                             });
+                // update scales
+                radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
+                colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
+                updateChart(tagsToDraw);
             }
          });
 
