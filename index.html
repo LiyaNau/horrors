@@ -5,15 +5,40 @@
     <title>Horror movies</title>
     <script type="text/javascript" src="d3/d3.js"></script>
     <style type="text/css">
+        h1 {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+        }
+        p {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+        }
+        button {
+            background-color: white;
+            border:2px solid #4d6ddb;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: rgba(77, 109, 219, 0.4);
+            color: black;
+        }
+        button:focus {
+            outline: none;
+        }
+        button.pressed {
+            background-color: #4d6ddb;
+            color: white;
+        }
         #tooltip {
             position: absolute;
             width: auto;
             height: auto;
             padding: 6px;
             background-color: white;
-            -webkit-border-radius: 10px;
-            -moz-border-radius: 10px;
-            border-radius: 10px;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
             pointer-events: none;
             -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
             -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
@@ -34,12 +59,25 @@
     </style>
 </head>
 <body>
+    <h1>120 years of horror movies</h1>
+    <p> Keywords for 13000 movies from TMDB</p>
     <div>
-        <button id="select">select</button>
-        <button id="previous">previous</button>
-        <span id="decade">1890</span>
-        <button id="next">next</button>
         <button id="all">all</button>
+        <button id="1890" class="decade">1890</button>
+        <button id="1900" class="decade">1900</button>
+        <button id="1910" class="decade">1910</button>
+        <button id="1920" class="decade">1920</button>
+        <button id="1930" class="decade">1930</button>
+        <button id="1940" class="decade">1940</button>
+        <button id="1950" class="decade">1950</button>
+        <button id="1960" class="decade">1960</button>
+        <button id="1970" class="decade">1970</button>
+        <button id="1980" class="decade">1980</button>
+        <button id="1990" class="decade">1990</button>
+        <button id="2000" class="decade">2000</button>
+        <button id="2010" class="decade">2010</button>
+
+
     </div>
     <div id="tooltip" class="hidden">
         <p><span id="key">key</span></p>
@@ -47,8 +85,8 @@
     </div>
     <script type="text/javascript">
         var diameter = 70, //max size of the bubbles
-            w = 900,
-            h = 800;
+            w = 700,
+            h = 700;
             n_min = 10; //minimal number of mentions for tag
 
         var decade = 1890;
@@ -161,15 +199,17 @@
             simulation.nodes(tagsToDraw)
                 .on("tick", ticked)
 
-            // buttons action
-            d3.select("#select")
-                .on("click", selectDecade)
-            d3.select("#next")
-                .on("click", increaseDecade)
-            d3.select("#previous")
-                .on("click", decreaseDecade)
+            // // buttons action
+            // d3.select("#select")
+            //     .on("click", selectDecade)
+            // d3.select("#next")
+            //     .on("click", increaseDecade)
+            // d3.select("#previous")
+            //     .on("click", decreaseDecade)
             d3.select("#all")
                 .on("click", unselect)
+            d3.selectAll(".decade")
+                .on("click", selectDecade)
 
             // tooltips
             d3.selectAll(".bubble")
@@ -199,6 +239,10 @@
 
 
             function selectDecade() {
+                d3.selectAll("button").classed("pressed",false);
+                buttonPressed = d3.select(this);
+                buttonPressed.classed("pressed",true);
+                decade = parseInt(buttonPressed.attr("id"),10);
                 // filter data for chosen decade
 
                 n_min = 2;
@@ -228,7 +272,6 @@
                 paths = d3.select("#clips")
                     .selectAll("clipPath")
                     .data(tagsToDraw, key)
-                debugger;
 
                 // removing unnesessary bubbles
                 circles.exit()
@@ -257,7 +300,6 @@
                         })
                     })
 
-                debugger;
                 paths = paths.enter()
                     .append("clipPath")
                     .attr("id", function(d) { return "clip-" + tagUrl(d) })
@@ -312,6 +354,11 @@
 
             function unselect() {
 
+                d3.selectAll("button").classed("pressed",false);
+
+                buttonPressed = d3.select(this);
+                buttonPressed.classed("pressed",true);
+
                 n_min = 10;
 
                 tagCount = d3.nest()
@@ -339,7 +386,6 @@
 
                 tooltip.style("left", x + "px")
                     .style("top", y + "px")
-                    //.attr("transform", "translate(" + w / 2 + "," + h / 2 + ")")
 
                 tooltip.select("#key")
                     .text(d.key)
