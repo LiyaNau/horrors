@@ -83,6 +83,7 @@ def combine(path_movies, path_tags):
         part = pd.read_pickle(path)
         tags = pd.concat([tags,part],axis=0)
 
+    tags = tags.drop_duplicates()
     tags['tag_id'] = tags['id']
     tags.drop('id', inplace=True, axis=1)
 
@@ -115,6 +116,6 @@ def combine(path_movies, path_tags):
 
 # load_movies('movies.pkl')
 
-#load_tags('movies.pkl','tags',13000)
+#load_tags('movies.pkl','tags',6000)
 
 combine('movies.pkl', 'tags.pkl')
