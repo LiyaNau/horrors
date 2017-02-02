@@ -60,7 +60,7 @@
 </head>
 <body>
     <h1>120 years of horror movies</h1>
-    <p> Keywords for 13000 movies from TMDB</p>
+    <p> Explore keywords for horror movies filmed from 1896 to 2016</p>
     <div>
         <button id="all">all</button>
         <button id="1890" class="decade">1890</button>
@@ -199,13 +199,6 @@
             simulation.nodes(tagsToDraw)
                 .on("tick", ticked)
 
-            // // buttons action
-            // d3.select("#select")
-            //     .on("click", selectDecade)
-            // d3.select("#next")
-            //     .on("click", increaseDecade)
-            // d3.select("#previous")
-            //     .on("click", decreaseDecade)
             d3.select("#all")
                 .on("click", unselect)
             d3.selectAll(".decade")
@@ -340,17 +333,6 @@
                 //debugger;
             };
 
-            function increaseDecade() {
-                decade = decade + 10;
-                d3.select("#decade")
-                    .text(decade)
-            }
-
-            function decreaseDecade() {
-                decade = decade -10;
-                d3.select("#decade")
-                    .text(decade)
-            }
 
             function unselect() {
 
