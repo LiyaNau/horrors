@@ -4,7 +4,9 @@ In this visualisation I want to explore keywords for horror movies filmed from 1
 ##Design
 I decided to do my visualisation as an animated bubble chart with possibility to chose a decade you want to look at and added tooltips to show information about every keyword.
 ##Feedback
-
+1. One potential opportunity to iterate and further improve would be to grab the top category (categories) of each decade and put them together in a viz, so that the reader can have a clear view as to the how the most popular category changes over the century.
+2. To declutter bubbles delete labels that are partially visible because it is impossible to read them.
+3. After click on particular buble show history of change for this tag
 ##Resources
 
 - Scott Murray,  Interactive Data Visualization for the Web. O'Reilly Media, 2013.
