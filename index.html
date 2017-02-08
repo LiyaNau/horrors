@@ -90,8 +90,14 @@
             n_min = 10; //minimal number of mentions for tag
 
         var decade = 1890;
+
+        var setTags = ["alien","scientist", "zombies", "vampire", "ghost", "monster", "hummer horror",
+            "slasher", "serial killer", "sex", "torture", "witch", "haunted house", "demon", "suspence",
+            "gore", "found footage"];
+
         var svg = d3.select("body")
                 .append("svg")
+                .attr("id", "bubbleChart")
                 .attr("width", w)
                 .attr("height", h)
 
@@ -376,9 +382,20 @@
 
                 tooltip.classed("hidden",false);
 
-                console.log(x,y);
-
             }
+         // Second chart - multiline
+
+         // preparing data
+
+        tagsByDecade = d3.nest()
+            .key(function (d) { return d.name})
+            .key(function (d) { return d.year_bucket})
+            .rollup(function(v) { return v.length})
+            .entries(data.filter(function(d) { return (d.year_bucket >0)}));
+
+        setTagsByDecade = tagsByDecade.filter(function(d) { return setTags.includes(d.key)})
+        console.log(JSON.stringify(setTagsByDecade));
+
          });
 
     </script>
