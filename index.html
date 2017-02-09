@@ -56,6 +56,11 @@
         .tag {
             pointer-events: none;
         }
+        path.line {
+            stroke-width: 2;
+            fill: none
+
+        }
     </style>
 </head>
 <body>
@@ -449,25 +454,26 @@
             .append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", margin.left)
-            //.attr("fill", "#000")
+            .attr("fill", "#000")
             .text("Number of movies");
 
         var line = d3.line()
-                .curve(d3.curveBasis)
+                .curve(d3.curveNatural)
                 .x(function (d) {return timeScale(toTime(d.key))})
                 .y(function (d) {return yScale(d.value)})
-        debugger;
+        //debugger;
 
-        lines = g.selectAll(".line")
+        lines = g.selectAll(".tagLine")
                     .data(setTagsByDecade)
                     .enter()
                     .append("g")
-                    .attr("class","line")
+                    .attr("class","tagline")
 
         lines.append("path")
+            .attr("class", "line")
             .attr("d", function(d) { return line(d.values)})
             .style("stroke", function(d) {return colorOrd(d.key)})
-            .style("fill", "none")
+
 
          });
 
