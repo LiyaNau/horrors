@@ -397,18 +397,22 @@
         setTagsByDecade = tagsByDecade.filter(function(d) { return setTags.includes(d.key)})
         console.log(JSON.stringify(setTagsByDecade));
 
-        h2 = 400;
-        w2 = 600;
+
+        var margin = {top: 20, right: 30, bottom: 20, left: 30},
+            width = 600 - margin.left - margin.right,
+            height = 400 - margin.top - margin.bottom;
 
         var svg2 = d3.select("body")
                 .append("svg")
                 .attr("id", "lineChart")
-                .attr("width", w2)
-                .attr("height", h2)
-        var g = svg2.append("g").attr("transform", "translate(" + 5+ "," + 25+ ")");
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+
+        var g = svg2.append("g")
+                    .attr("transform", "translate(" + margin.left+ "," + margin.top+ ")");
 
         var timeScale = d3.scaleTime()
-            .range([0, w2 - 5])
+            .range([0, width - 5])
             .domain([ new Date(1900,0,1), new Date(2010,0,1)])
                 // d3.min(setTagsByDecade, function(v) {
                 //     return d3.min(v.values, function(d) {return d.key})
@@ -418,7 +422,7 @@
                 // })
 
         var yScale = d3.scaleLinear()
-            .range([0,h2 - 25])
+            .range([height,0])
             .domain([
                 d3.min(tagsByDecade, function(v) {
                     return d3.min(v.values, function(d) {return d.value})
@@ -428,13 +432,13 @@
                 })
             ]);
 
-
+        var colorOrd = d3.scaleOrdinal(d3.schemeCategory20)
         // add axis
         xAxis = d3.axisBottom(timeScale)
                     .ticks(10);
         g.append("g")
             .attr("class", "axis xAxis")
-            .attr("transform", "translate(0," + (h2 -25)+ ")")
+            .attr("transform", "translate(0," + height+ ")")
             .call(xAxis);
             //.attr("fill", "#000");
 
@@ -444,14 +448,14 @@
             .call(d3.axisLeft(yScale))
             .append("text")
             .attr("transform", "rotate(-90)")
-            .attr("y", 5)
+            .attr("y", margin.left)
             //.attr("fill", "#000")
             .text("Number of movies");
 
         var line = d3.line()
-            //    .curve(d3.curveBasis)
+                .curve(d3.curveBasis)
                 .x(function (d) {return timeScale(toTime(d.key))})
-                .y(function (d) {return h2 - yScale(d.value)-25})
+                .y(function (d) {return yScale(d.value)})
         debugger;
 
         lines = g.selectAll(".line")
@@ -462,7 +466,7 @@
 
         lines.append("path")
             .attr("d", function(d) { return line(d.values)})
-            .style("stroke","blue")
+            .style("stroke", function(d) {return colorOrd(d.key)})
             .style("fill", "none")
 
          });
