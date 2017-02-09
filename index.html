@@ -390,32 +390,35 @@
 
         tagsByDecade = d3.nest()
             .key(function (d) { return d.name})
-            .key(function (d) { return toTime(d.year_bucket)})
+            .key(function (d) { return d.year_bucket}).sortKeys(d3.ascending)
             .rollup(function(v) { return v.length})
             .entries(data.filter(function(d) { return (d.year_bucket > 0)}));
 
         setTagsByDecade = tagsByDecade.filter(function(d) { return setTags.includes(d.key)})
         console.log(JSON.stringify(setTagsByDecade));
 
+        h2 = 400;
+        w2 = 600;
+
         var svg2 = d3.select("body")
                 .append("svg")
                 .attr("id", "lineChart")
-                .attr("width", w)
-                .attr("height", h)
-        var g = svg2.append("g").attr("transform", "translate(" + 5+ "," + 5+ ")");
+                .attr("width", w2)
+                .attr("height", h2)
+        var g = svg2.append("g").attr("transform", "translate(" + 5+ "," + 25+ ")");
 
         var timeScale = d3.scaleTime()
-            .range([0, w - 5])
-            .domain([ new Date(1890,0,1), new Date(2010,0,1)
+            .range([0, w2 - 5])
+            .domain([ new Date(1900,0,1), new Date(2010,0,1)])
                 // d3.min(setTagsByDecade, function(v) {
                 //     return d3.min(v.values, function(d) {return d.key})
                 // }),
                 // d3.max(setTagsByDecade, function(v) {
                 //     return d3.max(v.values, function(d) {return d.key})
                 // })
-            ])
+
         var yScale = d3.scaleLinear()
-            .range([0,h])
+            .range([0,h2 - 25])
             .domain([
                 d3.min(tagsByDecade, function(v) {
                     return d3.min(v.values, function(d) {return d.value})
@@ -424,15 +427,16 @@
                     return d3.max(v.values, function(d) {return d.value})
                 })
             ]);
-        debugger;
+
 
         // add axis
-        xAxis = d3.axisBottom(timeScale).ticks(10);
+        xAxis = d3.axisBottom(timeScale)
+                    .ticks(10);
         g.append("g")
             .attr("class", "axis xAxis")
-            .attr("transform", "translate(0," + (h -10) + ")")
-            .call(xAxis)
-            .attr("fill", "#000");
+            .attr("transform", "translate(0," + (h2 -25)+ ")")
+            .call(xAxis);
+            //.attr("fill", "#000");
 
 
         g.append("g")
@@ -441,13 +445,25 @@
             .append("text")
             .attr("transform", "rotate(-90)")
             .attr("y", 5)
-            .attr("fill", "#000")
+            //.attr("fill", "#000")
             .text("Number of movies");
 
         var line = d3.line()
-                .x(function (d) {return timeScale(d.key)})
-                .y(function (d) {return yScale(d.value)})
+            //    .curve(d3.curveBasis)
+                .x(function (d) {return timeScale(toTime(d.key))})
+                .y(function (d) {return h2 - yScale(d.value)-25})
+        debugger;
 
+        lines = g.selectAll(".line")
+                    .data(setTagsByDecade)
+                    .enter()
+                    .append("g")
+                    .attr("class","line")
+
+        lines.append("path")
+            .attr("d", function(d) { return line(d.values)})
+            .style("stroke","blue")
+            .style("fill", "none")
 
          });
 
