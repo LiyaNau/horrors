@@ -61,12 +61,18 @@
             fill: none
 
         }
+        #area1 {
+            float: left;
+        }
+        #area2 {
+            float: right;
+        }
     </style>
 </head>
 <body>
     <h1>120 years of horror movies</h1>
     <p> Explore keywords for horror movies filmed from 1896 to 2016</p>
-    <div>
+    <div >
         <button id="all">all</button>
         <button id="1890" class="decade">1890</button>
         <button id="1900" class="decade">1900</button>
@@ -82,8 +88,9 @@
         <button id="2000" class="decade">2000</button>
         <button id="2010" class="decade">2010</button>
 
-
     </div>
+    <div id="area1"> </div>
+    <div id="area2"> </div>
     <div id="tooltip" class="hidden">
         <p><span id="key">key</span></p>
         <p><span id="value">0</span></p>
@@ -100,7 +107,7 @@
             "slasher", "serial killer", "sex", "torture", "witch", "haunted house", "demon", "suspence",
             "gore", "found footage"];
 
-        var svg = d3.select("body")
+        var svg = d3.select("#area1")
                 .append("svg")
                 .attr("id", "bubbleChart")
                 .attr("width", w)
@@ -403,11 +410,11 @@
         console.log(JSON.stringify(setTagsByDecade));
 
 
-        var margin = {top: 20, right: 30, bottom: 20, left: 30},
-            width = 600 - margin.left - margin.right,
-            height = 400 - margin.top - margin.bottom;
+        var margin = {top: 50, right: 30, bottom: 400, left: 20},
+            width = 500 - margin.left - margin.right,
+            height =700 - margin.top - margin.bottom;
 
-        var svg2 = d3.select("body")
+        var svg2 = d3.select("#area2")
                 .append("svg")
                 .attr("id", "lineChart")
                 .attr("width", width + margin.left + margin.right)
@@ -458,7 +465,7 @@
             .text("Number of movies");
 
         var line = d3.line()
-                .curve(d3.curveNatural)
+                .curve(d3.curveMonotoneX)
                 .x(function (d) {return timeScale(toTime(d.key))})
                 .y(function (d) {return yScale(d.value)})
         //debugger;
