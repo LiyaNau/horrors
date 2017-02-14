@@ -67,6 +67,11 @@
         #area2 {
             float: right;
         }
+        .legend {
+            font-size: 14px;
+            font-weight: bold;
+            text-anchor: left;
+        }
     </style>
 </head>
 <body>
@@ -480,6 +485,21 @@
             .attr("class", "line")
             .attr("d", function(d) { return line(d.values)})
             .style("stroke", function(d) {return colorOrd(d.key)})
+
+        legendWidht = 220;
+        legendHeight = 20;
+        legendPoint = {x:margin.left, y: (700 - margin.bottom + legendHeight*2)}
+
+        legend = svg2.append("g")
+            .selectAll(".legend")
+            .data(setTagsByDecade)
+            .enter()
+            .append("text")
+            .attr("x", function(d,i) {return legendPoint.x + legendWidht * (i % 2)} )
+            .attr("y", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2)} )
+            .style("fill", function(d) {return colorOrd(d.key)})
+            .text(function(d) {return d.key})
+
 
 
          });
