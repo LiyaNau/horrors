@@ -17,3 +17,5 @@ I decided to do my visualisation as an animated bubble chart with possibility to
 - D3 in depth. http://d3indepth.com/
 - Forces in D3.js v4. https://roshansanthosh.wordpress.com/2016/09/25/forces-in-d3-js-v4/
 - Learn JS Data. http://learnjsdata.com/index.html
+- Multi-Series Line Chart https://bl.ocks.org/mbostock/3884955
+- Malcolm Maclean, D3 Tips and Tricks v4.x https://leanpub.com/d3-t-and-t-v4
