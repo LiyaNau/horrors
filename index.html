@@ -416,6 +416,10 @@
             .entries(data.filter(function(d) { return (d.year_bucket > 0)}));
 
         setTagsByDecade = tagsByDecade.filter(function(d) { return setTags.includes(d.key)})
+
+        setTagsByDecade.forEach(function(d,i) {
+            d.active = i < 6 ? true : false;
+        })
         console.log(JSON.stringify(setTagsByDecade));
 
 
@@ -490,6 +494,9 @@
             .attr("id", function(d) { return "line-" + tagUrl(d)})
             .attr("d", function(d) { return line(d.values)})
             .style("stroke", function(d) {return colorOrd(d.key)})
+            .style("opacity", function(d) {
+                return d.active ? 1 : 0;
+            })
 
         legendWidht = 220;
         legendHeight = 20;
@@ -505,15 +512,18 @@
             .attr("cx", function(d,i) {return legendPoint.x + legendWidht * (i % 2) } )
             .attr("cy", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2) - 4})
             .attr("r", 5)
-            .style("fill", function(d) {return colorOrd(d.key)})
+            .style("fill", function(d) {
+                return d.active ?colorOrd(d.key) : d3.rgb(200,200,200,1);
+            })
             .on("click", function(d) {
-                var active = d.active ? false : true;
-                var newOpacity = active ? 0 : 1;
+                var newStatus = d.active ? false : true;
+                var newOpacity = newStatus ? 1 : 0;
                 d3.select("#line-"+ tagUrl(d))
                     .style("opacity", newOpacity)
-                d.active = active;
-                color = active ? d3.rgb(200,200,200,1): colorOrd(d.key);
-                d3.select(this).style("fill", color)
+
+                newColor = newStatus ?  colorOrd(d.key): d3.rgb(200,200,200,1);
+                d3.select(this).style("fill", newColor)
+                d.active = newStatus;
             })
         legendEnter.append("text")
             .attr("x", function(d,i) {return legendPoint.x + legendWidht * (i % 2) + 10} )
