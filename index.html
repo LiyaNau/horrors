@@ -72,6 +72,10 @@
             font-weight: bold;
             text-anchor: left;
         }
+        .legend circle {
+          stroke-width: 2px;
+        }
+
     </style>
 </head>
 <body>
@@ -415,7 +419,7 @@
         console.log(JSON.stringify(setTagsByDecade));
 
 
-        var margin = {top: 50, right: 30, bottom: 400, left: 20},
+        var margin = {top: 50, right: 30, bottom: 400, left: 30},
             width = 500 - margin.left - margin.right,
             height =700 - margin.top - margin.bottom;
 
@@ -483,6 +487,7 @@
 
         lines.append("path")
             .attr("class", "line")
+            .attr("id", function(d) { return "line-" + tagUrl(d)})
             .attr("d", function(d) { return line(d.values)})
             .style("stroke", function(d) {return colorOrd(d.key)})
 
@@ -492,12 +497,28 @@
 
         legend = svg2.append("g")
             .selectAll(".legend")
-            .data(setTagsByDecade)
-            .enter()
-            .append("text")
-            .attr("x", function(d,i) {return legendPoint.x + legendWidht * (i % 2)} )
-            .attr("y", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2)} )
+            .data(setTagsByDecade);
+
+        legendEnter = legend.enter().append('g').attr('class', 'legend');
+
+        legendEnter.append("circle")
+            .attr("cx", function(d,i) {return legendPoint.x + legendWidht * (i % 2) } )
+            .attr("cy", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2) - 4})
+            .attr("r", 5)
             .style("fill", function(d) {return colorOrd(d.key)})
+            .on("click", function(d) {
+                var active = d.active ? false : true;
+                var newOpacity = active ? 0 : 1;
+                d3.select("#line-"+ tagUrl(d))
+                    .style("opacity", newOpacity)
+                d.active = active;
+                color = active ? d3.rgb(200,200,200,1): colorOrd(d.key);
+                d3.select(this).style("fill", color)
+            })
+        legendEnter.append("text")
+            .attr("x", function(d,i) {return legendPoint.x + legendWidht * (i % 2) + 10} )
+            .attr("y", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2)} )
+           // .style("fill", function(d) {return colorOrd(d.key)})
             .text(function(d) {return d.key})
 
 
