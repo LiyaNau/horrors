@@ -72,9 +72,6 @@
             font-weight: bold;
             text-anchor: left;
         }
-        .legend circle {
-          stroke-width: 2px;
-        }
 
     </style>
 </head>
@@ -112,9 +109,8 @@
 
         var decade = 1890;
 
-        var setTags = ["alien","scientist", "zombies", "vampire", "ghost", "monster", "hummer horror",
-            "slasher", "serial killer", "sex", "torture", "witch", "haunted house", "demon", "suspence",
-            "gore", "found footage"];
+        var setTags = ["demon", "vampire", "zombies","alien","scientist", "ghost", "monster", "hummer horror", "slasher", "serial killer", "sex", "torture", "witch", "haunted house",
+            "suspence","gore", "found footage"];
 
         var svg = d3.select("#area1")
                 .append("svg")
@@ -409,24 +405,25 @@
          // preparing data
         toTime = d3.timeParse("%Y");
 
-        tagsByDecade = d3.nest()
+        tagsByDecade = d3.nest() // summing up number of movies by decade for every tag
             .key(function (d) { return d.name})
             .key(function (d) { return d.year_bucket}).sortKeys(d3.ascending)
             .rollup(function(v) { return v.length})
             .entries(data.filter(function(d) { return (d.year_bucket > 0)}));
 
+        // filter only selected tags
         setTagsByDecade = tagsByDecade.filter(function(d) { return setTags.includes(d.key)})
 
         setTagsByDecade.forEach(function(d,i) {
-            d.active = i < 6 ? true : false;
+            d.active = i < 6 ? true : false; // firs six will be active by default
         })
-        console.log(JSON.stringify(setTagsByDecade));
 
 
         var margin = {top: 50, right: 30, bottom: 400, left: 30},
             width = 500 - margin.left - margin.right,
             height =700 - margin.top - margin.bottom;
 
+        // create second chart
         var svg2 = d3.select("#area2")
                 .append("svg")
                 .attr("id", "lineChart")
@@ -436,15 +433,10 @@
         var g = svg2.append("g")
                     .attr("transform", "translate(" + margin.left+ "," + margin.top+ ")");
 
+        // creating scales
         var timeScale = d3.scaleTime()
             .range([0, width - 5])
             .domain([ new Date(1900,0,1), new Date(2010,0,1)])
-                // d3.min(setTagsByDecade, function(v) {
-                //     return d3.min(v.values, function(d) {return d.key})
-                // }),
-                // d3.max(setTagsByDecade, function(v) {
-                //     return d3.max(v.values, function(d) {return d.key})
-                // })
 
         var yScale = d3.scaleLinear()
             .range([height,0])
@@ -458,6 +450,7 @@
             ]);
 
         var colorOrd = d3.scaleOrdinal(d3.schemeCategory20)
+
         // add axis
         xAxis = d3.axisBottom(timeScale)
                     .ticks(10);
@@ -465,7 +458,6 @@
             .attr("class", "axis xAxis")
             .attr("transform", "translate(0," + height+ ")")
             .call(xAxis);
-            //.attr("fill", "#000");
 
 
         g.append("g")
@@ -481,8 +473,8 @@
                 .curve(d3.curveMonotoneX)
                 .x(function (d) {return timeScale(toTime(d.key))})
                 .y(function (d) {return yScale(d.value)})
-        //debugger;
 
+        // adding lines
         lines = g.selectAll(".tagLine")
                     .data(setTagsByDecade)
                     .enter()
@@ -498,9 +490,12 @@
                 return d.active ? 1 : 0;
             })
 
-        legendWidht = 220;
-        legendHeight = 20;
-        legendPoint = {x:margin.left, y: (700 - margin.bottom + legendHeight*2)}
+        // adding legend
+        var legendWidht = 220,
+            legendHeight = 20,
+            legendPoint = {x:margin.left, y: (700 - margin.bottom + legendHeight*2)},
+            rCircle = 5,
+            colorInactive = d3.rgb(200,200,200,1);
 
         legend = svg2.append("g")
             .selectAll(".legend")
@@ -511,9 +506,9 @@
         legendEnter.append("circle")
             .attr("cx", function(d,i) {return legendPoint.x + legendWidht * (i % 2) } )
             .attr("cy", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2) - 4})
-            .attr("r", 5)
+            .attr("r", rCircle)
             .style("fill", function(d) {
-                return d.active ?colorOrd(d.key) : d3.rgb(200,200,200,1);
+                return d.active ?colorOrd(d.key) : colorInactive;
             })
             .on("click", function(d) {
                 var newStatus = d.active ? false : true;
@@ -521,14 +516,13 @@
                 d3.select("#line-"+ tagUrl(d))
                     .style("opacity", newOpacity)
 
-                newColor = newStatus ?  colorOrd(d.key): d3.rgb(200,200,200,1);
+                newColor = newStatus ?  colorOrd(d.key): colorInactive;
                 d3.select(this).style("fill", newColor)
                 d.active = newStatus;
             })
         legendEnter.append("text")
             .attr("x", function(d,i) {return legendPoint.x + legendWidht * (i % 2) + 10} )
             .attr("y", function(d,i) {return legendPoint.y + legendHeight * Math.floor(i/2)} )
-           // .style("fill", function(d) {return colorOrd(d.key)})
             .text(function(d) {return d.key})
 
 
