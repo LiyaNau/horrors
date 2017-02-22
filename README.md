@@ -1,14 +1,14 @@
 # 120 years of horror movies
 ##Summary
-In this visualisation I want to explore keywords for horror movies filmed from 1896 to 2016 to understand how things that frightened people changed with time. As a source of data I chose The Movie Database (TMDb).
+Some time ago I read one thougth that horror films reflect common fears of society, so I decided to make this visualisation with keywords for horror movies filmed from 1896 to 2016 to understand how things that frightened people changed with time. As a source of data I chose The Movie Database (TMDb).
 
 ##Design
-I decided to do my visualisation as an animated bubble chart with possibility to chose a decade you want to look at and added tooltips to show information about every keyword. After receiving feedback I decided to add a line chart with most interesting keywords changing over time and a possibility for viewer to add another keywords by clicking on corresponding bubbles.
+I decided to do my visualisation as an animated bubble chart with possibility to chose a decade you want to look at and added tooltips to show information about every keyword. After receiving feedback I decided to add a line chart with most interesting keywords changing over time and a possibility for viewer to select keywords for comparison by clicking on corresponding bubbles.
 
 ##Feedback
 1. One potential opportunity to iterate and further improve would be to grab the top category (categories) of each decade and put them together in a viz, so that the reader can have a clear view as to the how the most popular category changes over the century.
 2. To declutter bubbles delete labels that are partially visible because it is impossible to read them.
-3. After click on particular buble show history of change for this tag
+3. After click on particular bubble show history of change for this tag
 
 ##Resources
 
