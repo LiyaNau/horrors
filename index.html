@@ -142,7 +142,8 @@
 
             var colorScale    = d3.scaleSequential()
                                 .domain([0,d3.max(tagsToDraw, function(d){return d.value})])
-                                .interpolator(d3.interpolateCool);
+            //                    .interpolator(d3.interpolateCool);
+                                .interpolator(d3.interpolate("darkslategrey","lightgrey"));
 
             var simulation = d3.forceSimulation()
                                 .force("x", d3.forceX().strength(0.03))
