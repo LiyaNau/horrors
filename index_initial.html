@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Horror movies</title>
+    <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+    <style type="text/css">
+        h1 {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+        }
+        p {
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+        }
+        button {
+            background-color: white;
+            border:2px solid #4d6ddb;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: rgba(77, 109, 219, 0.4);
+            color: black;
+        }
+        button:focus {
+            outline: none;
+        }
+        button.pressed {
+            background-color: #4d6ddb;
+            color: white;
+        }
+        #tooltip {
+            position: absolute;
+            width: auto;
+            height: auto;
+            padding: 6px;
+            background-color: white;
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            pointer-events: none;
+            -webkit-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+            }
+        #tooltip.hidden {
+            display: none;
+            }
+        #tooltip p {
+            margin: 0;
+            font-family: sans-serif;
+            font-size: 14px;
+            line-height: 20px;
+            }
+        .tag {
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>120 years of horror movies</h1>
+    <p> Explore keywords for horror movies filmed from 1896 to 2016</p>
+    <div>
+        <button id="all">all</button>
+        <button id="1890" class="decade">1890</button>
+        <button id="1900" class="decade">1900</button>
+        <button id="1910" class="decade">1910</button>
+        <button id="1920" class="decade">1920</button>
+        <button id="1930" class="decade">1930</button>
+        <button id="1940" class="decade">1940</button>
+        <button id="1950" class="decade">1950</button>
+        <button id="1960" class="decade">1960</button>
+        <button id="1970" class="decade">1970</button>
+        <button id="1980" class="decade">1980</button>
+        <button id="1990" class="decade">1990</button>
+        <button id="2000" class="decade">2000</button>
+        <button id="2010" class="decade">2010</button>
+
+
+    </div>
+    <div id="tooltip" class="hidden">
+        <p><span id="key">key</span></p>
+        <p><span id="value">0</span></p>
+    </div>
+    <script type="text/javascript">
+        var diameter = 70, //max size of the bubbles
+            w = 700,
+            h = 700;
+            n_min = 10; //minimal number of mentions for tag
+
+        var decade = 1890;
+        var svg = d3.select("body")
+                .append("svg")
+                .attr("width", w)
+                .attr("height", h)
+
+        d3.csv("data.csv", function(error, data){
+
+            data = data.map(function(d){
+                d.year = +d["year"];
+                d.year_bucket = +d["year_bucket"];
+                return d;
+                });
+
+            // count tne number of mentions for all tags
+            var tagCount = d3.nest()
+                              .key(function(d) { return d.name; })
+                              .rollup(function(v) { return v.length; })
+                              .entries(data);
+            // select tags that were mentioned more than n_min times
+            var tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > n_min;
+                                             });
+            var radiusScale = d3.scaleSqrt()
+                            .domain([n_min, d3.max(tagsToDraw, function(d){
+                                return d.value})])
+                            .range([0,diameter])
+
+            var colorScale    = d3.scaleSequential()
+                                .domain([0,d3.max(tagsToDraw, function(d){return d.value})])
+                                .interpolator(d3.interpolateCool);
+
+            var simulation = d3.forceSimulation()
+                                .force("x", d3.forceX().strength(0.03))
+                                .force("y", d3.forceY().strength(0.03))
+                                .force("collide", d3.forceCollide(function(d){
+                                   return radiusScale(d.value)+1;
+                                }).strength(0.6))
+
+            var key = function(d) {
+                return d.key;
+            }
+
+            var tag = function(d) {
+                // label to display for bigger bubbles
+                if (radiusScale(d.value) > 10) {
+                    return d.key;
+                }
+            }
+
+            var tagUrl = function(d) {
+                // creates clipPath url from tag name
+                return d.key.split(" ").join("-");
+            }
+
+            var g = svg.append("g")
+                .attr("transform", "translate(" + w / 2 + "," + h / 2 + ")")
+
+            // creating bubbles
+            var circles = g.append("g")
+                .attr("id","bubbles")
+                .selectAll("circle")
+                .data(tagsToDraw, key)
+                .enter()
+                .append("circle")
+                .attr("class","bubble")
+                .attr("r", function(d) {
+                    return radiusScale(d.value);
+                })
+                .attr("fill",function(d) {
+                    return colorScale(d.value);
+                })
+
+            // creating paths
+            var paths = g.append("g")
+                    .attr("id", "clips")
+                    .selectAll("clipPath")
+                    .data(tagsToDraw, key)
+                    .enter()
+                    .append("clipPath")
+                        .attr("id", function(d) { return "clip-" + tagUrl(d) })
+
+                paths.append("circle")
+                    .attr("class","path")
+                    .attr("r", function(d) {return radiusScale(d.value) })
+
+            // creating labels
+            var labels = g.append("g")
+                    .attr("id", "tags")
+                    .selectAll("text")
+                    .data(tagsToDraw, key)
+                    .enter()
+
+                    .append("text")
+                    .attr("class","tag")
+                    .attr("clip-path", function(d) {
+                        return "url(#clip-" + tagUrl(d) + ")";
+                    })
+                    .text(tag)
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("fill", "white")
+                    .attr("text-anchor", "middle");
+
+            pathCircles = d3.select("#clips")
+                    .selectAll(".path");
+
+            simulation.nodes(tagsToDraw)
+                .on("tick", ticked)
+
+            d3.select("#all")
+                .on("click", unselect)
+            d3.selectAll(".decade")
+                .on("click", selectDecade)
+
+            // tooltips
+            d3.selectAll(".bubble")
+                .on("mouseover",showTooltip)
+                .on("mouseout", function() {
+                    d3.select("#tooltip").classed("hidden", true);
+                })
+
+
+
+            function ticked() {
+
+                circles
+                    .attr("cx", function(d){ return d.x})
+                    .attr("cy", function(d){ return d.y})
+
+
+                pathCircles
+                    .attr("cx", function(d){ return d.x})
+                    .attr("cy", function(d){ return d.y})
+
+                labels
+                    .attr("x", function(d){ return d.x})
+                    .attr("y", function(d){ return d.y})
+            }
+
+
+
+            function selectDecade() {
+                d3.selectAll("button").classed("pressed",false);
+                buttonPressed = d3.select(this);
+                buttonPressed.classed("pressed",true);
+                decade = parseInt(buttonPressed.attr("id"),10);
+                // filter data for chosen decade
+
+                n_min = 2;
+                tagCount = d3.nest()
+                              .key(function(d) { return d.name; })
+                              .rollup(function(v) { return v.length; })
+                              .entries(data.filter(function(d) {
+                                                return d.year_bucket === decade;
+                                             }));
+                tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > n_min;
+                                             });
+                // update scales
+                radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
+                colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
+
+                updateChart(tagsToDraw);
+            };
+
+            function updateChart(tagsToDraw) {
+
+                // binding  with new data
+                circles = circles
+                    .data(tagsToDraw, key);
+                labels = labels
+                    .data(tagsToDraw, key);
+                paths = d3.select("#clips")
+                    .selectAll("clipPath")
+                    .data(tagsToDraw, key)
+
+                // removing unnesessary bubbles
+                circles.exit()
+                    .transition(2000)
+                    .attr("r",0)
+                    .remove();
+
+                labels.exit()
+                    .remove();
+
+                paths.exit()
+                    .remove();
+
+                // adding and updatind bubbles
+                circles = circles.enter()
+                    .append("circle")
+                    .attr("class", "bubble")
+                    .merge(circles)
+                    .call(function(node) {
+                        node.transition(2000)
+                        .attr("r", function(d) {
+                            return radiusScale(d.value);
+                        })
+                        .attr("fill",function(d) {
+                            return colorScale(d.value);
+                        })
+                    })
+
+                paths = paths.enter()
+                    .append("clipPath")
+                    .attr("id", function(d) { return "clip-" + tagUrl(d) })
+                    .append("circle")
+                    .attr("class","path")
+                    .attr("r", function(d) {return radiusScale(d.value) })
+                    .merge(paths);
+
+
+                paths.select("circle")
+                    .attr("r", function(d) {return radiusScale(d.value) })
+
+                labels = labels.enter()
+                    .append("text")
+                    .attr("class","tag")
+                    .merge(labels)
+                    .attr("clip-path", function(d) {
+                        return "url(#clip-" + tagUrl(d) + ")";
+                    })
+                    .text(tag)
+                    .attr("font-family", "sans-serif")
+                    .attr("font-size", "11px")
+                    .attr("fill", "white")
+                    .attr("text-anchor", "middle");
+
+                // tooltips
+                d3.selectAll(".bubble")
+                .on("mouseover",showTooltip)
+                .on("mouseout", function() {
+                    d3.select("#tooltip").classed("hidden", true);
+                })
+
+                // restarting simulation
+                simulation.nodes(tagsToDraw)
+                simulation.alpha(1).restart();
+                pathCircles = d3.select("#clips")
+                    .selectAll(".path");
+                //debugger;
+            };
+
+
+            function unselect() {
+
+                d3.selectAll("button").classed("pressed",false);
+
+                buttonPressed = d3.select(this);
+                buttonPressed.classed("pressed",true);
+
+                n_min = 10;
+
+                tagCount = d3.nest()
+                    .key(function(d) { return d.name; })
+                    .rollup(function(v) { return v.length; })
+                    .entries(data);
+
+                // select tags that were mentioned more than n_min times
+                tagsToDraw = tagCount.filter(function(d) {
+                                                return d.value > n_min;
+                                             });
+                // update scales
+                radiusScale.domain([n_min,d3.max(tagsToDraw,function(d){return d.value})])
+                colorScale.domain([0,d3.max(tagsToDraw, function(d){return d.value})])
+                updateChart(tagsToDraw);
+            }
+
+            function showTooltip(d) {
+
+                var x = parseFloat(d3.select(this).attr("cx")) + w / 2 ;
+                var y = parseFloat(d3.select(this).attr("cy")) + h / 2;
+
+
+                var tooltip = d3.select("#tooltip");
+
+                tooltip.style("left", x + "px")
+                    .style("top", y + "px")
+
+                tooltip.select("#key")
+                    .text(d.key)
+                tooltip.select("#value")
+                    .text(d.value)
+
+                tooltip.classed("hidden",false);
+
+                console.log(x,y);
+
+            }
+         });
+
+    </script>
+
+
+</body>
+</html>
